@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+use 5.010;
+use strict;
+use File::Spec::Functions qw(catfile);
+
+my $statedir  = $ENV{MUNIN_PLUGSTATE};
+my $statefile = $0; $statefile =~ s[^.*/][];
+my $cache = catfile($statedir, $statefile . '-cache');
+
+given ($ARGV[0]) {
+    when ("config") {
+        print <<END;
+graph_title CPAN modules that are outdated
+graph_args --base 1000 -l 0
+graph_vlabel modules
+graph_category CPAN
+graph_info The number of installed CPAN modules that aren't up to date
+count.label modules
+count.type GAUGE
+count.info The number of CPAN modules that aren't up to date as reported by cpan-outdated(1)
+END
+    }
+    default {
+        my ($lines) = qx[wc -l $cache] =~ /^(\d+)/;
+        say "count.value $lines";
+    }
+}
